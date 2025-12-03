@@ -14,7 +14,8 @@ export async function generateStaticParams() {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }) {
-  const product = await getProductById(params.id);
+  const { id } = await params; // Await params here
+  const product = await getProductById(id);
   
   return {
     title: `${product.title} - NextStore`,
@@ -29,7 +30,8 @@ export async function generateMetadata({ params }) {
 
 // Main page component - Server Component with SSG
 export default async function ProductDetailPage({ params }) {
-  const product = await getProductById(params.id);
+  const { id } = await params; // Await params here
+  const product = await getProductById(id);
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
