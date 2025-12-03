@@ -1,21 +1,38 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { getProductById, getAllProducts } from '@/services/api';
 import AddToCartButton from '@/components/AddToCartButton';
 
 // Generate static paths for all products at build time
 export async function generateStaticParams() {
-  const products = await getAllProducts();
-  
-  return products.map((product) => ({
-    id: product.id.toString(),
-  }));
+  try {
+    const products = await getAllProducts();
+    
+    // Return empty array if no products (prevents build failure)
+    if (!products || products.length === 0) {
+      return [];
+    }
+    
+    return products.map((product) => ({
+      id: product.id.toString(),
+    }));
+  } catch (error) {
+    console.error('Error in generateStaticParams:', error);
+    return [];
+  }
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }) {
-  const { id } = await params; // Await params here
+  const { id } = await params;
   const product = await getProductById(id);
+  
+  if (!product) {
+    return {
+      title: 'Product Not Found - NextStore',
+    };
+  }
   
   return {
     title: `${product.title} - NextStore`,
@@ -30,8 +47,13 @@ export async function generateMetadata({ params }) {
 
 // Main page component - Server Component with SSG
 export default async function ProductDetailPage({ params }) {
-  const { id } = await params; // Await params here
+  const { id } = await params;
   const product = await getProductById(id);
+
+  // Show 404 if product not found
+  if (!product) {
+    notFound();
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -136,4 +158,7 @@ export default async function ProductDetailPage({ params }) {
   );
 }
 
+// Enable dynamic rendering as fallback
+export const dynamic = 'force-static';
+export const dynamicParams = true; // Allow dynamic params not in generateStaticParams
 export const revalidate = 3600; // Revalidate every hour
