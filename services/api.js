@@ -1,103 +1,65 @@
-// services/api.js
+const API_URL = "https://fakestoreapi.com";
 
-const API_URL = 'https://fakestoreapi.com';
+async function safeFetch(url) {
+  try {
+    // runtime-only, no caching at build time
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // log for debugging (will appear in Vercel logs)
+    console.log("[safeFetch] GET", url, "status:", res.status);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      const err = new Error(`HTTP error! status: ${res.status} ${text}`);
+      err.status = res.status;
+      throw err;
+    }
+
+    return await res.json();
+  } catch (err) {
+    // bubble error up so callers can decide
+    console.error("[safeFetch] error fetching", url, err);
+    throw err;
+  }
+}
 
 export async function getAllProducts() {
   try {
-    console.log('Fetching all products from:', `${API_URL}/products`);
-    
-    const response = await fetch(`${API_URL}/products`, {
-      next: { revalidate: 3600 },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('Products received:', data.length);
-    
-    return data;
+    return await safeFetch(`${API_URL}/products`);
   } catch (error) {
-    console.error('Error in getAllProducts:', error);
-    // Return empty array instead of throwing to prevent build failures
+    // return empty array at runtime so UI can render fallback
     return [];
   }
 }
 
 export async function getProductById(id) {
+  if (!id) return null;
   try {
-    console.log('Fetching product:', id);
-    
-    const response = await fetch(`${API_URL}/products/${id}`, {
-      next: { revalidate: 3600 },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    console.log('Product response status:', response.status);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('Product received:', data.title);
-    
-    return data;
+    return await safeFetch(`${API_URL}/products/${id}`);
   } catch (error) {
-    console.error(`Error fetching product ${id}:`, error);
+    if (error && error.status === 404) return null;
     return null;
   }
 }
 
 export async function getProductsByCategory(category) {
+  if (!category) return [];
   try {
-    const response = await fetch(`${API_URL}/products/category/${category}`, {
-      next: { revalidate: 3600 },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
+    return await safeFetch(`${API_URL}/products/category/${encodeURIComponent(category)}`);
   } catch (error) {
-    console.error(`Error fetching products by category ${category}:`, error);
     return [];
   }
 }
 
 export async function getAllCategories() {
   try {
-    const response = await fetch(`${API_URL}/products/categories`, {
-      next: { revalidate: 3600 },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
+    return await safeFetch(`${API_URL}/products/categories`);
   } catch (error) {
-    console.error('Error fetching categories:', error);
     return [];
   }
 }
