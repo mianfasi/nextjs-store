@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbar />
+        {/* <Navbar /> */}
         <main>{children}</main>
         <Toaster position="top-right" />
         <footer className="bg-gray-800 text-white py-8 mt-16">
