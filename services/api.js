@@ -1,30 +1,77 @@
-const BASE_URL = 'https://fakestoreapi.com';
+// services/api.js
+
+const API_URL = 'https://fakestoreapi.com';
 
 export async function getAllProducts() {
-  const res = await fetch(`${BASE_URL}/products`, {
-    next: { revalidate: 3600 } // Revalidate every hour
-  });
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch products');
+  try {
+    const response = await fetch(`${API_URL}/products`, {
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    // Return empty array to prevent build failure
+    return [];
   }
-  
-  return res.json();
 }
 
 export async function getProductById(id) {
-  const res = await fetch(`${BASE_URL}/products/${id}`, {
-    next: { revalidate: 3600 }
-  });
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch product');
+  try {
+    const response = await fetch(`${API_URL}/products/${id}`, {
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Error fetching product ${id}:`, error);
+    // Return null to trigger notFound() in the page
+    return null;
   }
-  
-  return res.json();
 }
 
-export async function getProductIds() {
-  const products = await getAllProducts();
-  return products.map(product => product.id.toString());
+export async function getProductsByCategory(category) {
+  try {
+    const response = await fetch(`${API_URL}/products/category/${category}`, {
+      next: { revalidate: 3600 },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Error fetching products by category ${category}:`, error);
+    return [];
+  }
+}
+
+export async function getAllCategories() {
+  try {
+    const response = await fetch(`${API_URL}/products/categories`, {
+      next: { revalidate: 3600 },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
 }
