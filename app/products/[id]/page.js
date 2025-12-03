@@ -1,27 +1,13 @@
+// app/products/[id]/page.js
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProductById, getAllProducts } from '@/services/api';
+import { getProductById } from '@/services/api';
 import AddToCartButton from '@/components/AddToCartButton';
 
-// Generate static paths for all products at build time
-export async function generateStaticParams() {
-  try {
-    const products = await getAllProducts();
-    
-    // Return empty array if no products (prevents build failure)
-    if (!products || products.length === 0) {
-      return [];
-    }
-    
-    return products.map((product) => ({
-      id: product.id.toString(),
-    }));
-  } catch (error) {
-    console.error('Error in generateStaticParams:', error);
-    return [];
-  }
-}
+// Force dynamic rendering - no build-time generation
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }) {
@@ -45,7 +31,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// Main page component - Server Component with SSG
+// Main page component - Dynamic rendering
 export default async function ProductDetailPage({ params }) {
   const { id } = await params;
   const product = await getProductById(id);
@@ -157,8 +143,3 @@ export default async function ProductDetailPage({ params }) {
     </div>
   );
 }
-
-// Enable dynamic rendering as fallback
-export const dynamic = 'force-static';
-export const dynamicParams = true; // Allow dynamic params not in generateStaticParams
-export const revalidate = 3600; // Revalidate every hour
